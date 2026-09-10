@@ -304,4 +304,21 @@ class PersistenceIntegrationTest {
         List<Treatment> animalTreatments = treatmentRepository.findByAnimalIdOrderByPerformedAtAsc(animal.getId());
         assertThat(animalTreatments).hasSize(2);
     }
+
+    // Test 12: V3 — tracking_device_code agregado por migración Flyway
+    @Test
+    void testTrackingDeviceCodeColumn() {
+        RescueCenter center = new RescueCenter("DB-GPS", "GPS Test", "Test");
+        RescueCase rescueCase = new RescueCase("RES-GPS", LocalDate.now(), "Location", RescueStatus.ADMITTED);
+        center.addCase(rescueCase);
+
+        Animal animal = new Animal("AN-GPS", "Dolphin", "Tursiops", AnimalSex.UNKNOWN);
+        animal.setTrackingDeviceCode("GPS-DEVICE-001");
+        rescueCase.assignAnimal(animal);
+
+        rescueCenterRepository.save(center);
+
+        Animal retrieved = animalRepository.findById(animal.getId()).get();
+        assertThat(retrieved.getTrackingDeviceCode()).isEqualTo("GPS-DEVICE-001");
+    }
 }

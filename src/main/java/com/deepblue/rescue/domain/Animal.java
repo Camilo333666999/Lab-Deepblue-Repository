@@ -35,6 +35,9 @@ public class Animal {
     @OneToMany(mappedBy = "animal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Treatment> treatments = new ArrayList<>();
 
+    @Column(name = "tracking_device_code", unique = true, length = 50)
+    private String trackingDeviceCode;
+
     // Constructores
     public Animal() {}
 
@@ -114,6 +117,14 @@ public class Animal {
 
     public void setTreatments(List<Treatment> treatments) {
         this.treatments = treatments;
+    }
+
+    public String getTrackingDeviceCode() {
+        return trackingDeviceCode;
+    }
+
+    public void setTrackingDeviceCode(String trackingDeviceCode) {
+        this.trackingDeviceCode = trackingDeviceCode;
     }
 
     @Override
