@@ -501,13 +501,9 @@ findByRescueCaseRescueCenterCode(String centerCode)
 - [Testcontainers](https://www.testcontainers.org/)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 
-## Autor
-
-Proyecto académico - Laboratorio de Persistencia con Spring Boot 4
-
 ## Licencia
 
-MIT
+Honestamente no tenemos idea de lo que va aquí, pendiente por preguntar al profesor
 
 ---
 
