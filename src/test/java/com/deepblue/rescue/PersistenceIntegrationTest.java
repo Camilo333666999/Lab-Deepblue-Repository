@@ -305,7 +305,54 @@ class PersistenceIntegrationTest {
         assertThat(animalTreatments).hasSize(2);
     }
 
-    // Test 12: V3 — tracking_device_code agregado por migración Flyway
+    // Test 12: Consulta 4 del reto integrador — nombre común contiene texto ignorando mayúsculas
+    @Test
+    void testFindByCommonNameContainingIgnoreCase() {
+        RescueCenter center = new RescueCenter("DB-CONTAIN", "Contain Test", "Test");
+        RescueCase rescueCase = new RescueCase("RES-CONTAIN", LocalDate.now(), "Location", RescueStatus.ADMITTED);
+        center.addCase(rescueCase);
+
+        Animal turtle = new Animal("AN-CONTAIN-001", "Green Sea Turtle", "Chelonia mydas", AnimalSex.FEMALE);
+        rescueCase.assignAnimal(turtle);
+
+        rescueCenterRepository.save(center);
+
+        List<Animal> results = animalRepository.findByCommonNameContainingIgnoreCase("turtle");
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getCommonName()).isEqualTo("Green Sea Turtle");
+    }
+
+    // Test 13: Reto sin guía — animales en rehabilitación tratados por especialistas con expertise Trauma
+    @Test
+    void testFindAnimalsInRehabilitationWithSpecialistExpertise() {
+        RescueCenter center = new RescueCenter("DB-RETO", "Reto Test", "Test");
+        RescueCase rescueCase = new RescueCase("RES-RETO", LocalDate.now(), "Location", RescueStatus.IN_REHABILITATION);
+        center.addCase(rescueCase);
+
+        Animal turtle = new Animal("AN-RETO", "Green Sea Turtle", "Chelonia mydas", AnimalSex.FEMALE);
+        rescueCase.assignAnimal(turtle);
+
+        Expertise trauma = expertiseRepository.findByNameIgnoreCase("Trauma").get();
+        Specialist elena = new Specialist("SPEC-RETO", "Elena", "Vargas", "elena-reto@deepblue.org");
+        elena.setActive(true);
+        elena.addExpertise(trauma);
+
+        Treatment treatment = new Treatment(turtle, elena, LocalDateTime.now(), TreatmentType.WOUND_CARE);
+
+        rescueCenterRepository.save(center);
+        specialistRepository.save(elena);
+        treatmentRepository.save(treatment);
+
+        List<Animal> results = animalRepository.findByRescueCaseStatus(RescueStatus.IN_REHABILITATION);
+        assertThat(results).hasSize(1);
+
+        List<Animal> rehabWithTrauma = treatmentRepository.findAnimalsInRehabilitationWithSpecialistExpertise(
+                RescueStatus.IN_REHABILITATION, "trauma");
+        assertThat(rehabWithTrauma).hasSize(1);
+        assertThat(rehabWithTrauma.get(0).getAnimalCode()).isEqualTo("AN-RETO");
+    }
+
+    // Test 14: V3 — tracking_device_code agregado por migración Flyway
     @Test
     void testTrackingDeviceCodeColumn() {
         RescueCenter center = new RescueCenter("DB-GPS", "GPS Test", "Test");
