@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -51,6 +53,9 @@ class PersistenceIntegrationTest {
 
     @Autowired
     private TreatmentRepository treatmentRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     // Test 1: Métodos heredados
     @Test
@@ -367,5 +372,67 @@ class PersistenceIntegrationTest {
 
         Animal retrieved = animalRepository.findById(animal.getId()).get();
         assertThat(retrieved.getTrackingDeviceCode()).isEqualTo("GPS-DEVICE-001");
+    }
+
+    // Test 15: Paso 53 — Query Method por status (3 casos, 2 IN_REHABILITATION)
+    @Test
+    void testQueryMethodFilterByStatus() {
+        RescueCenter center = new RescueCenter("DB-STATUS", "Status Test", "Test");
+
+        RescueCase c1 = new RescueCase("RES-053-001", LocalDate.now().minusDays(2), "Loc 1", RescueStatus.IN_REHABILITATION);
+        RescueCase c2 = new RescueCase("RES-053-002", LocalDate.now().minusDays(1), "Loc 2", RescueStatus.READY_FOR_RELEASE);
+        RescueCase c3 = new RescueCase("RES-053-003", LocalDate.now(), "Loc 3", RescueStatus.IN_REHABILITATION);
+
+        center.addCase(c1);
+        center.addCase(c2);
+        center.addCase(c3);
+
+        rescueCenterRepository.save(center);
+
+        List<RescueCase> inRehab = rescueCaseRepository.findByStatusOrderByRescueDateAsc(RescueStatus.IN_REHABILITATION);
+        assertThat(inRehab).hasSize(2);
+    }
+
+    // Test 16: Paso 54 — Query Method navegando relaciones con dos centros (exclusión)
+    @Test
+    void testQueryMethodAnimalsByCenterExclusion() {
+        RescueCenter car = new RescueCenter("DB-CAR", "Caribbean", "Santa Marta");
+        RescueCase carCase = new RescueCase("RES-CAR-054", LocalDate.now(), "Bahía Concha", RescueStatus.ADMITTED);
+        car.addCase(carCase);
+        Animal carTurtle = new Animal("AN-CAR-054", "Green Sea Turtle", "Chelonia mydas", AnimalSex.FEMALE);
+        carCase.assignAnimal(carTurtle);
+
+        RescueCenter pac = new RescueCenter("DB-PAC", "Pacific", "Buenaventura");
+        RescueCase pacCase = new RescueCase("RES-PAC-054", LocalDate.now(), "Playa", RescueStatus.ADMITTED);
+        pac.addCase(pacCase);
+        Animal pacSeal = new Animal("AN-PAC-054", "Sea Lion", "Zalophus", AnimalSex.MALE);
+        pacCase.assignAnimal(pacSeal);
+
+        rescueCenterRepository.save(car);
+        rescueCenterRepository.save(pac);
+
+        List<Animal> carAnimals = animalRepository.findByRescueCaseRescueCenterCode("DB-CAR");
+        assertThat(carAnimals).hasSize(1);
+        assertThat(carAnimals).extracting(Animal::getAnimalCode).containsExactly("AN-CAR-054");
+    }
+
+    // Test 17: Paso 60 — Constraint FK violada en PostgreSQL
+    @Test
+    void testForeignKeyConstraint() {
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO treatments (animal_id, specialist_id, performed_at, type) VALUES (999999, 999999, NOW(), 'WOUND_CARE')"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    // Test 18: Paso 61 — Constraint CHECK en rescue_cases.status
+    @Test
+    void testCheckConstraint() {
+        jdbcTemplate.update("INSERT INTO rescue_centers (code, name, city) VALUES ('DB-CHK', 'Check Test', 'Test')");
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "INSERT INTO rescue_cases (case_code, rescue_date, rescue_location, status, rescue_center_id) " +
+                        "VALUES ('RES-CHK', '2026-01-01', NULL, 'INVALID_STATUS', " +
+                        "(SELECT id FROM rescue_centers WHERE code = 'DB-CHK'))"))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }
