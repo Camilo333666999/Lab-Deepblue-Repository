@@ -39,6 +39,14 @@ public class Treatment {
         this.type = type;
     }
 
+    public Treatment(Animal animal, Specialist specialist, LocalDateTime performedAt, TreatmentType type, String description) {
+        this.animal = animal;
+        this.specialist = specialist;
+        this.performedAt = performedAt;
+        this.type = type;
+        this.description = description;
+    }
+
     // Getters y Setters
     public Long getId() {
         return id;
