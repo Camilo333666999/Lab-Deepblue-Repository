@@ -2,6 +2,9 @@
 -- IMPORTANTE: este archivo NO es una migración Flyway y NO se ejecuta
 -- automáticamente. Ejecutarlo solo en una base local o de laboratorio.
 --
+-- Regla de tratamiento: solo UNDER_EVALUATION e IN_REHABILITATION son
+-- elegibles. AN-2026-001 (ADMITTED) devuelve eligible:false y POST 409.
+--
 -- Ejemplo:
 --   psql -U postgres -h localhost -p 5432 -d deepblue -f scripts/demo-data.sql
 --

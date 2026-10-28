@@ -140,6 +140,7 @@ Comprobaciones realizadas:
   - detalle, elegibilidad, tratamientos y caché del detalle;
   - `ApiError` `404` para un animal inexistente;
   - `409` para transición inválida y `200` para transición válida;
+  - `409` para tratamiento no elegible (`AN-2026-001`) y `201` para tratamiento válido (`AN-2026-005`);
   - `400` por descripción corta, especialista vacío, fecha futura y fecha vacía;
   - `404` para especialista inexistente;
   - `201` con actualización de la tabla y reset del formulario;

@@ -511,10 +511,10 @@ Solo los casos en `UNDER_EVALUATION` o `IN_REHABILITATION` admiten tratamiento. 
 
 ### Verificación realizada
 
-- `mvn clean test`: **49 pruebas, 0 fallos, 0 errores**.
+- `mvn clean test`: **56 pruebas, 0 fallos, 0 errores**.
 - `npm run build`: correcto.
 - `npm run lint`: correcto, con una advertencia de Fast Refresh por exportar `STATUSES` desde `CaseList.jsx` (código literal del laboratorio).
-- Prueba E2E con Playwright y Chrome: lista, caché, lista vacía, detalle, `404`, `409`, transición válida, errores `400` por campo, registro `201`, actualización de tabla y limpieza del formulario.
+- Prueba E2E con Playwright y Chrome: lista, caché, lista vacía, detalle, `404`, `409`, transición válida, errores `400` por campo, registro `201`, actualización de tabla y limpieza del formulario. La elegibilidad y el registro respetan la regla: `AN-2026-001` devuelve `409` y `AN-2026-005` registra con `201`.
 
 ### Documentación del frontend
 
