@@ -18,6 +18,8 @@ import com.deepblue.rescue.service.impl.TreatmentServiceImpl;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -109,10 +111,11 @@ class TreatmentServiceImplTest {
         verify(treatmentRepository, never()).save(any());
     }
 
-    @Test
-    void shouldRejectTreatmentWhenCaseIsReleased() {
+    @ParameterizedTest
+    @EnumSource(value = RescueStatus.class, names = {"ADMITTED", "READY_FOR_RELEASE", "RELEASED", "CLOSED"})
+    void shouldRejectTreatmentWhenRescueCaseCannotReceiveTreatment(RescueStatus status) {
         RescueCase rescueCase = new RescueCase(
-                "RES-100", LocalDate.of(2026, 8, 20), "Bahia Concha", RescueStatus.RELEASED);
+                "RES-100", LocalDate.of(2026, 8, 20), "Bahia Concha", status);
 
         Animal animal = new Animal("AN-001", "Green Sea Turtle", "Chelonia mydas", AnimalSex.FEMALE);
         rescueCase.assignAnimal(animal);
@@ -128,7 +131,8 @@ class TreatmentServiceImplTest {
                 TreatmentType.OBSERVATION, "Post-release observation.");
 
         assertThatThrownBy(() -> service.register(request))
-                .isInstanceOf(BusinessRuleException.class);
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("is not eligible for treatment");
 
         verify(treatmentRepository, never()).save(any());
     }

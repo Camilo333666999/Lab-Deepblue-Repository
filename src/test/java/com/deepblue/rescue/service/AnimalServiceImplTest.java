@@ -12,6 +12,8 @@ import com.deepblue.rescue.service.impl.AnimalServiceImpl;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -62,10 +64,11 @@ class AnimalServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    @Test
-    void shouldReturnTrueWhenAnimalCanReceiveTreatment() {
+    @ParameterizedTest
+    @EnumSource(value = RescueStatus.class, names = {"UNDER_EVALUATION", "IN_REHABILITATION"})
+    void shouldReturnTrueWhenAnimalCanReceiveTreatment(RescueStatus status) {
         RescueCase rescueCase = new RescueCase(
-                "RES-100", LocalDate.of(2026, 8, 20), "Bahia Concha", RescueStatus.IN_REHABILITATION);
+                "RES-100", LocalDate.of(2026, 8, 20), "Bahia Concha", status);
         Animal animal = new Animal("AN-001", "Green Sea Turtle", "Chelonia mydas", AnimalSex.FEMALE);
         rescueCase.assignAnimal(animal);
 
@@ -74,10 +77,11 @@ class AnimalServiceImplTest {
         assertThat(service.canReceiveTreatment("AN-001")).isTrue();
     }
 
-    @Test
-    void shouldReturnFalseWhenAnimalCannotReceiveTreatment() {
+    @ParameterizedTest
+    @EnumSource(value = RescueStatus.class, names = {"ADMITTED", "READY_FOR_RELEASE", "RELEASED", "CLOSED"})
+    void shouldReturnFalseWhenAnimalCannotReceiveTreatment(RescueStatus status) {
         RescueCase rescueCase = new RescueCase(
-                "RES-100", LocalDate.of(2026, 8, 20), "Bahia Concha", RescueStatus.RELEASED);
+                "RES-100", LocalDate.of(2026, 8, 20), "Bahia Concha", status);
         Animal animal = new Animal("AN-001", "Green Sea Turtle", "Chelonia mydas", AnimalSex.FEMALE);
         rescueCase.assignAnimal(animal);
 
