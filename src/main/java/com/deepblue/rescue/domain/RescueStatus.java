@@ -6,5 +6,9 @@ public enum RescueStatus {
     IN_REHABILITATION,
     READY_FOR_RELEASE,
     RELEASED,
-    CLOSED
+    CLOSED;
+
+    public boolean canReceiveTreatment() {
+        return this == UNDER_EVALUATION || this == IN_REHABILITATION;
+    }
 }

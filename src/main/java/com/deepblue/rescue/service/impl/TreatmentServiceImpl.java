@@ -78,9 +78,9 @@ public class TreatmentServiceImpl implements TreatmentService {
 
         RescueCase rescueCase = animal.getRescueCase();
         RescueStatus status = rescueCase.getStatus();
-        if (status == RescueStatus.RELEASED || status == RescueStatus.CLOSED) {
+        if (!status.canReceiveTreatment()) {
             throw new BusinessRuleException(
-                    "Cannot register treatment because the rescue case is " + status + "."
+                    "Animal " + request.animalCode() + " is not eligible for treatment."
             );
         }
 

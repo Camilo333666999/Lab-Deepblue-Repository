@@ -52,8 +52,7 @@ public class AnimalServiceImpl implements AnimalService {
                 .findByAnimalCode(animalCode)
                 .map(animal -> {
                     RescueStatus status = animal.getRescueCase().getStatus();
-                    return status == RescueStatus.UNDER_EVALUATION
-                                || status == RescueStatus.IN_REHABILITATION;
+                    return status.canReceiveTreatment();
                 })
                 .orElseThrow(
                         () -> new ResourceNotFoundException(
