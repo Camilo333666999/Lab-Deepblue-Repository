@@ -15,6 +15,8 @@ El proyecto implementa la capa de persistencia para gestionar:
 - Especialistas y sus áreas de experiencia
 - Tratamientos realizados
 
+La rama `feature/frontend-react-tanstack-query` incorpora además una interfaz web en `deepblue-ui/` construida con **React 19**, **Vite 8**, **JavaScript** y **TanStack Query 5**. El frontend consume el API REST del backend a través del proxy `/api` de Vite.
+
 ## Modelo de Datos
 
 ### Entidades Principales
@@ -78,6 +80,8 @@ Specialist N ───────── M Expertise
 - **Flyway** (Migraciones)
 - **Testcontainers** (Testing)
 - **Maven**
+- **React 19** + **Vite 8** (JavaScript)
+- **TanStack Query 5**
 
 ## Estructura del Proyecto
 
@@ -419,6 +423,102 @@ Mientras ejecutan los tests:
 docker ps
 # Verás un contenedor postgres:18-alpine temporal
 ```
+
+## Frontend React (Laboratorio 4)
+
+La carpeta [`deepblue-ui/`](deepblue-ui/) contiene la SPA que consume el backend:
+
+- Lista de casos filtrada por estado, con estados de carga, error y lista vacía.
+- Detalle del caso con animal, elegibilidad para tratamiento y tratamientos registrados.
+- Cambio de estado con `useMutation`, invalidación de caché y visualización de errores `409`.
+- Registro de tratamientos con `useReducer`, errores de validación por campo y actualización automática de la tabla.
+
+### Estructura del frontend
+
+```text
+deepblue-ui/
+├── src/
+│   ├── api/
+│   │   ├── client.js
+│   │   ├── rescueCases.js
+│   │   ├── animals.js
+│   │   └── treatments.js
+│   ├── hooks/
+│   │   ├── useRescueCases.js
+│   │   ├── useAnimal.js
+│   │   └── useRegisterTreatment.js
+│   ├── components/
+│   │   ├── ErrorMessage.jsx
+│   │   ├── CaseList.jsx
+│   │   ├── CaseDetail.jsx
+│   │   ├── ChangeStatus.jsx
+│   │   ├── TreatmentList.jsx
+│   │   └── TreatmentForm.jsx
+│   ├── App.jsx
+│   ├── index.css
+│   └── main.jsx
+├── vite.config.js
+└── package.json
+
+scripts/
+└── demo-data.sql   # datos de demostración, no es una migración Flyway
+```
+
+### Puesta en marcha
+
+Requisitos: Java 21, PostgreSQL, Node.js 22+ y npm.
+
+```bash
+# 1. Backend (desde la raíz del repositorio)
+mvn spring-boot:run
+
+# 2. Datos de demostración (en otra terminal; Flyway ya creó el esquema)
+psql -U postgres -h localhost -d deepblue -f scripts/demo-data.sql
+
+# 3. Frontend
+cd deepblue-ui
+npm install
+npm run dev
+```
+
+La aplicación queda disponible en <http://localhost:5173>. El proxy de Vite envía `/api` a `http://localhost:8080`.
+
+También puedes validar el frontend con:
+
+```bash
+cd deepblue-ui
+npm run build
+npm run lint
+```
+
+### Datos de demostración
+
+`scripts/demo-data.sql` es un script idempotente para una base local; **no** se ejecuta como migración Flyway. Incluye:
+
+- Centro `DB-CAR`.
+- Casos `RES-2026-001` a `RES-2026-005` en distintos estados.
+- Animales `AN-2026-001` a `AN-2026-005`.
+- Especialista activo `SPEC-001` y especialista inactivo `SPEC-002`.
+- Un tratamiento inicial para `AN-2026-002`.
+
+Solo los casos en `UNDER_EVALUATION` o `IN_REHABILITATION` admiten tratamiento. Para probar el camino exitoso usa `AN-2026-002` (`IN_REHABILITATION`) o `AN-2026-005` (`UNDER_EVALUATION`); `AN-2026-001` está en `ADMITTED` y devuelve `409`. El caso `RES-2026-004` permite probar una transición inválida `ADMITTED → RELEASED` y obtener `409`.
+
+### Decisiones de implementación
+
+- El único cambio respecto a los bloques literales del laboratorio es `staleTime: 30_000` en el `QueryClient` de `deepblue-ui/src/main.jsx`, para que los checkpoints de caché se cumplan también en la pestaña *Network*.
+- El seed se mantiene fuera de Flyway y requiere ejecución manual.
+- El proyecto usa JavaScript puro; no se añadió TypeScript, autenticación ni despliegue.
+
+### Verificación realizada
+
+- `mvn clean test`: **56 pruebas, 0 fallos, 0 errores**.
+- `npm run build`: correcto.
+- `npm run lint`: correcto, con una advertencia de Fast Refresh por exportar `STATUSES` desde `CaseList.jsx` (código literal del laboratorio).
+- Prueba E2E con Playwright y Chrome: lista, caché, lista vacía, detalle, `404`, `409`, transición válida, errores `400` por campo, registro `201`, actualización de tabla y limpieza del formulario. La elegibilidad y el registro respetan la regla: `AN-2026-001` devuelve `409` y `AN-2026-005` registra con `201`.
+
+### Documentación del frontend
+
+- [README del frontend](deepblue-ui/README.md)
 
 ## Características Destacadas
 
